@@ -19,17 +19,19 @@ tokenizer = BertTokenizer.from_pretrained(tokenizer_path, local_files_only=True)
 model = SentimentModel(config)
 model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
 
-
 @app.route('/')
 def home():
     return render_template('index.html')
 
 @app.route('/predict', methods=['POST'])
 def show_prediction():
-    input_comment = request.form.values()
-    prediction = predict(model, input_comment, tokenizer, max_len=128, batch_size=1) # features Must be in the form [[a, b]]
+    labels_str = ['SAD', 'HAPPY']
+    input_comment = [x for x in request.form.values()][0]
+    prediction = predict(model, [input_comment], tokenizer, max_len=128, batch_size=1)[1]
 
-    return render_template('index.html', prediction_text=f'This comment seems to be {prediction}.')
+    from numpy import argmax
+    prediction_text = f'This comment seems to be {labels_str[argmax(prediction)]}.'
+    return render_template('index.html', prediction_text=prediction_text, input_comment=input_comment)
 
 
 if __name__=='__main__':
